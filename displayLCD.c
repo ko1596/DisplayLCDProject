@@ -58,8 +58,6 @@ void init_gpio(void)
 	gpio_SetDirection(GPIO_D1, GPIO_DIRECTION_OUT);
 	gpio_SetDirection(GPIO_D2, GPIO_DIRECTION_OUT);
 	gpio_SetDirection(GPIO_CS0, GPIO_DIRECTION_OUT);
-
-	
 }
 
 void unexport_gpio(void)
@@ -70,34 +68,6 @@ void unexport_gpio(void)
 	gpio_Unexport(GPIO_D1);
 	gpio_Unexport(GPIO_D2);
 	gpio_Unexport(GPIO_CS0);
-}
-
-/*
- *  Unescape - process hexadecimal escape character
- *      converts shell input "\x23" -> 0x23
- */
-static int unescape(char *_dst, char *_src, size_t len)
-{
-	int ret = 0;
-	int match;
-	char *src = _src;
-	char *dst = _dst;
-	unsigned int ch;
-
-	while (*src) {
-		if (*src == '\\' && *(src+1) == 'x') {
-			match = sscanf(src + 2, "%2x", &ch);
-			if (!match)
-				pabort("malformed input string");
-
-			src += 4;
-			*dst++ = (unsigned char)ch;
-		} else {
-			*dst++ = *src++;
-		}
-		ret++;
-	}
-	return ret;
 }
 
 static void hex_dump(const void *src, size_t length, size_t line_size,
