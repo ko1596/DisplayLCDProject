@@ -11,8 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "spi_8MM_driver.h"
 
-
-
 void spidev_init()
 {
 	spi_dev.device = SPI_DEVICE;
@@ -28,7 +26,7 @@ void pabort(const char *s)
 }
 
 void hex_dump(const void *src, size_t length, size_t line_size,
-					 char *prefix)
+			  char *prefix)
 {
 	int i = 0;
 	const unsigned char *address = src;
@@ -108,10 +106,12 @@ void transfer_data(uint8_t data)
 void transfer_pixel(unsigned char *data)
 {
 	unsigned char buff[32];
-
-		int ret = 0;
+	int ret = 0;
 	int fd;
-	
+	uint8_t rx[ARRAY_SIZE(buff)] = {
+		0,
+	};
+
 	fd = open(spi_dev.device, O_RDWR);
 
 	ret = ioctl(fd, SPI_IOC_WR_MODE32, &spi_dev.mode);
@@ -132,12 +132,7 @@ void transfer_pixel(unsigned char *data)
 		{
 			buff[ctj] = data[ct * 32 + ctj];
 		}
-		uint8_t rx[ARRAY_SIZE(buff)] = {
-			0,
-		};
-		//printf("%d\n", sizeof(buff));
 
-		
 		transfer(fd, buff, rx, sizeof(buff));
 	}
 	close(fd);

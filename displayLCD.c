@@ -198,34 +198,22 @@ void LCD_Image(unsigned char data[])
 			buf = 0;
 			for (i = 0; i < 4; i++)
 			{
-				//b = data[y * ROW_BYTE_NUM + (399 - x) * 3 * 4 + i * 3];
-				//g = data[y * ROW_BYTE_NUM + (399 - x) * 3 * 4 + i * 3 + 1];
-				//r = data[y * ROW_BYTE_NUM + (399 - x) * 3 * 4 + i * 3 + 2];
 				b = data[y * ROW_BYTE_NUM + (x)*3 * 4 + i * 3];
 				g = data[y * ROW_BYTE_NUM + (x)*3 * 4 + i * 3 + 1];
 				r = data[y * ROW_BYTE_NUM + (x)*3 * 4 + i * 3 + 2];
 
 				if (b > 0x7F && g > 0x7F && r > 0x7F)
-					//buf |= 0x0 << ((3 - i) * 2);
 					buf |= 0x1 << ((i)*2);
 
 				if (b <= 0x7F && g <= 0x7F && r > 0x7F)
-					//buf |= 0x2 << ((3 - i) * 2);
 					buf |= 0x2 << ((i)*2);
 
 				if (b <= 0x7F && g <= 0x7F && r <= 0x7F)
-					//buf |= 0x3 << ((3 - i) * 2);
 					buf |= 0x3 << ((i)*2);
 			}
-			//LCD_WrDat(buf);
-			//LCD_WrPICDat(buf); // R
 			trd[count++] = buf;
 		}
-		//LCD_WrDat(0x00);
 		trd[count++] = 0x00;
-
-		//LCD_WrDat(0x00);
-		//LCD_WrPICDat(0x00);
 		trd[count++] = 0x00;
 	}
 	transfer_pixel(&trd[0]);
@@ -238,13 +226,12 @@ int main(int argc, char **argv)
 	unsigned char *buf;
 	FILE *fp;
 	unsigned char str[30];
-	//mode |= SPI_CS_HIGH;
+
 	init_gpio();
 	spidev_init();
 	LCD_Init();
 	usleep(120000); //  	120ms
 
-	//LCD_SetCmd1(0xE4, 0x02); //設定QSPI/SPI
 	LCD_WrCmd(0x29);
 
 	buf = malloc(sizeof(unsigned char) * 1600 * 1200 * 3);
