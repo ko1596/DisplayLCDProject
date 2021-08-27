@@ -11,6 +11,46 @@
 /* Includes ------------------------------------------------------------------*/
 #include "spi_8MM_driver.h"
 
+void spidev_init()
+{
+	spi_dev.device = SPI_DEVICE;
+	spi_dev.bits = SPI_BITS_PER_WORD;
+	spi_dev.speed = SPI_MAX_SPEED_HZ;
+	spi_dev.cs_change = SPI_CS_CHANGE;
+}
+
+static void hex_dump(const void *src, size_t length, size_t line_size,
+					 char *prefix)
+{
+	int i = 0;
+	const unsigned char *address = src;
+	const unsigned char *line = address;
+	unsigned char c;
+
+	printf("%s | ", prefix);
+	while (length-- > 0)
+	{
+		printf("%02X ", *address++);
+		if (!(++i % line_size) || (length == 0 && i % line_size))
+		{
+			if (length == 0)
+			{
+				while (i++ % line_size)
+					printf("__ ");
+			}
+			printf(" |");
+			while (line < address)
+			{
+				c = *line++;
+				printf("%c", (c < 32 || c > 126) ? '.' : c);
+			}
+			printf("|\n");
+			if (length > 0)
+				printf("%s | ", prefix);
+		}
+	}
+}
+
 static void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
 {
 	int ret;
@@ -19,31 +59,71 @@ static void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
 		.tx_buf = (unsigned long)tx,
 		.rx_buf = (unsigned long)rx,
 		.len = len,
-		.delay_usecs = delay,
-		.speed_hz = speed,
-		.bits_per_word = bits,
+		.delay_usecs = spi_dev.delay,
+		.speed_hz = spi_dev.speed,
+		.bits_per_word = spi_dev.bits,
+		.cs_change = spi_dev.cs_change,
 	};
-
-	if (mode & SPI_TX_QUAD)
-		tr.tx_nbits = 4;
-	else if (mode & SPI_TX_DUAL)
-		tr.tx_nbits = 2;
-	if (mode & SPI_RX_QUAD)
-		tr.rx_nbits = 4;
-	else if (mode & SPI_RX_DUAL)
-		tr.rx_nbits = 2;
-	if (!(mode & SPI_LOOP)) {
-		if (mode & (SPI_TX_QUAD | SPI_TX_DUAL))
-			tr.rx_buf = 0;
-		else if (mode & (SPI_RX_QUAD | SPI_RX_DUAL))
-			tr.tx_buf = 0;
-	}
 
 	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
 	if (ret < 1)
 		pabort("can't send spi message");
 
-	//hex_dump(tx, len, 32, "TX");
+	//hex_dump(tx, len, 32, "TX");			//print transfer data
+}
+
+void transfer_data(uint8_t data)
+{
+	int ret = 0;
+	int fd;
+	uint8_t tx[] = {data};
+	uint8_t rx[ARRAY_SIZE(tx)] = {
+		0,
+	};
+
+	fd = open(spi_dev.device, O_RDWR);
+
+	ret = ioctl(fd, SPI_IOC_WR_MODE32, &spi_dev.mode);
+	if (ret == -1)
+		pabort("can't set spi mode");
+
+	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &spi_dev.bits);
+	if (ret == -1)
+		pabort("can't set bits per word");
+
+	ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &spi_dev.speed);
+	if (ret == -1)
+		pabort("can't set max speed hz");
+
+	transfer(fd, tx, rx, sizeof(tx));
+}
+
+void transfer_pixel(unsigned char const *data)
+{
+	int ret = 0;
+	int fd;
+
+	uint8_t rx[ARRAY_SIZE(data)] = {
+		0,
+	};
+
+	fd = open(spi_dev.device, O_RDWR);
+
+	ret = ioctl(fd, SPI_IOC_WR_MODE32, &spi_dev.mode);
+	if (ret == -1)
+		pabort("can't set spi mode");
+
+	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &spi_dev.bits);
+	if (ret == -1)
+		pabort("can't set bits per word");
+
+	ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &spi_dev.speed);
+	if (ret == -1)
+		pabort("can't set max speed hz");
+
+	transfer(fd, data, rx, sizeof(data));
+
+	close(fd);
 }
 
 /************************ (C) COPYRIGHT Joey Ke *****END OF FILE****/

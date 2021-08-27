@@ -27,8 +27,6 @@
 static const char *device = "/dev/spidev1.0";
 static uint32_t mode;
 static uint8_t bits = 8;
-static char *input_file;
-static char *output_file;
 static uint32_t speed = 30000000;
 static uint16_t delay;
 static int verbose;
@@ -69,167 +67,33 @@ void unexport_gpio(void)
 	gpio_Unexport(GPIO_CS0);
 }
 
-static void hex_dump(const void *src, size_t length, size_t line_size,
-					 char *prefix)
-{
-	int i = 0;
-	const unsigned char *address = src;
-	const unsigned char *line = address;
-	unsigned char c;
-
-	printf("%s | ", prefix);
-	while (length-- > 0)
-	{
-		printf("%02X ", *address++);
-		if (!(++i % line_size) || (length == 0 && i % line_size))
-		{
-			if (length == 0)
-			{
-				while (i++ % line_size)
-					printf("__ ");
-			}
-			printf(" |");
-			while (line < address)
-			{
-				c = *line++;
-				printf("%c", (c < 32 || c > 126) ? '.' : c);
-			}
-			printf("|\n");
-			if (length > 0)
-				printf("%s | ", prefix);
-		}
-	}
-}
-
-static void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
-{
-	int ret;
-
-	struct spi_ioc_transfer tr = {
-		.tx_buf = (unsigned long)tx,
-		.rx_buf = (unsigned long)rx,
-		.len = len,
-		.delay_usecs = delay,
-		.speed_hz = speed,
-		.bits_per_word = bits,
-	};
-
-	if (mode & SPI_TX_QUAD)
-		tr.tx_nbits = 4;
-	else if (mode & SPI_TX_DUAL)
-		tr.tx_nbits = 2;
-	if (mode & SPI_RX_QUAD)
-		tr.rx_nbits = 4;
-	else if (mode & SPI_RX_DUAL)
-		tr.rx_nbits = 2;
-	if (!(mode & SPI_LOOP))
-	{
-		if (mode & (SPI_TX_QUAD | SPI_TX_DUAL))
-			tr.rx_buf = 0;
-		else if (mode & (SPI_RX_QUAD | SPI_RX_DUAL))
-			tr.tx_buf = 0;
-	}
-
-	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
-	if (ret < 1)
-		pabort("can't send spi message");
-
-	//hex_dump(tx, len, 32, "TX");
-}
-
 void LCD_WrCmd(unsigned char cmd)
 {
-	int ret = 0;
-	int fd;
-
-	uint8_t tx[] = {cmd};
-	uint8_t rx[ARRAY_SIZE(tx)] = {
-		0,
-	};
-
 	gpio_SetValue(GPIO_DCX, GPIO_VALUE_LOW);
 	gpio_SetValue(GPIO_CS0, GPIO_VALUE_LOW);
 
-	fd = open(device, O_RDWR);
+	transfer_data(cmd);
 
-	ret = ioctl(fd, SPI_IOC_WR_MODE32, &mode);
-	if (ret == -1)
-		pabort("can't set spi mode");
-
-	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
-	if (ret == -1)
-		pabort("can't set bits per word");
-
-	ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
-	if (ret == -1)
-		pabort("can't set max speed hz");
-
-	transfer(fd, tx, rx, sizeof(tx));
 	gpio_SetValue(GPIO_DCX, GPIO_VALUE_HIGH);
 	gpio_SetValue(GPIO_CS0, GPIO_VALUE_HIGH);
-	close(fd);
 }
 
 void LCD_WrDat(uint8_t dat)
 {
-	int ret = 0;
-	int fd;
-
-	uint8_t tx[] = {dat};
-	uint8_t rx[ARRAY_SIZE(tx)] = {
-		0,
-	};
-
 	gpio_SetValue(GPIO_CS0, GPIO_VALUE_LOW);
 
-	fd = open(device, O_RDWR);
+	transfer_data(dat);
 
-	ret = ioctl(fd, SPI_IOC_WR_MODE32, &mode);
-	if (ret == -1)
-		pabort("can't set spi mode");
-
-	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
-	if (ret == -1)
-		pabort("can't set bits per word");
-
-	ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
-	if (ret == -1)
-		pabort("can't set max speed hz");
-
-	transfer(fd, tx, rx, sizeof(tx));
 	gpio_SetValue(GPIO_CS0, GPIO_VALUE_HIGH);
-	close(fd);
 }
 
 void LCD_WrPICDat(unsigned char const *data)
 {
-	int ret = 0;
-	int fd;
-
-	uint8_t rx[ARRAY_SIZE(data)] = {
-		0,
-	};
-	//printf("%d\n", sizeof(data));
 	gpio_SetValue(GPIO_CS0, GPIO_VALUE_LOW);
 
-	fd = open(device, O_RDWR);
-
-	ret = ioctl(fd, SPI_IOC_WR_MODE32, &mode);
-	if (ret == -1)
-		pabort("can't set spi mode");
-
-	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
-	if (ret == -1)
-		pabort("can't set bits per word");
-
-	ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
-	if (ret == -1)
-		pabort("can't set max speed hz");
-
-	transfer(fd, data, rx, sizeof(data));
-
+	transfer_pixel(data);
+	
 	gpio_SetValue(GPIO_CS0, GPIO_VALUE_HIGH);
-	close(fd);
 }
 
 void LCD_SetCmd1(unsigned char cmd, unsigned char dat)
