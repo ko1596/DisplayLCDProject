@@ -11,12 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "gpio_dev.h"
 
-static void pabort(const char *s)
-{
-	perror(s);
-	abort();
-}
-
 GPIO_Error gpio_Export(unsigned int gpio_num)
 {
     int fd, len;  
@@ -24,7 +18,8 @@ GPIO_Error gpio_Export(unsigned int gpio_num)
    
     fd = open(SYSFS_GPIO_DIR "/export", O_WRONLY);  
     if (fd < 0) {  
-        pabort("gpio/export");  
+        perror("gpio/export");  
+        abort();
         return fd;  
     }  
    

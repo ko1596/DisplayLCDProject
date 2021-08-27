@@ -13,20 +13,20 @@
  #define SPI_8MM_DRIVER_H
 /* Includes ------------------------------------------------------------------*/
 #include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <linux/spi/spidev.h>
+#include <sys/ioctl.h>
 
 /* Define ------------------------------------------------------------------*/
-#define SPI_DEVICE              "/dev/spidev1.1"
+#define SPI_DEVICE              "/dev/spidev1.0"
 #define SPI_BITS_PER_WORD       8
-#define SPI_MAX_SPEED_HZ        1000000
+#define SPI_MAX_SPEED_HZ        40000000
 #define SPI_CS_CHANGE           1
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
-
-/* Global variables -----------------------------------------------------------*/
-extern spidev_t spi_dev;
 
 /**
  * @struct  Radar_ObjectSpeedData_t
@@ -42,11 +42,15 @@ typedef struct spidev_t
   uint8_t cs_change;
 } spidev_t;
 
-static void hex_dump(const void *src, size_t length, size_t line_size, char *prefix);
+/* Global variables -----------------------------------------------------------*/
+spidev_t spi_dev;
+
+void pabort(const char *s);
+void hex_dump(const void *src, size_t length, size_t line_size, char *prefix);
 void spidev_init();
 void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len);
 void transfer_data(uint8_t data);
-void transfer_pixel(unsigned char const *data);
+void transfer_pixel(unsigned char *data);
 
 #endif  /* SPI_8MM_DRIVER_H */
 /************************ (C) COPYRIGHT Joey Ke *****END OF FILE****/

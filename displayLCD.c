@@ -13,6 +13,7 @@
 #include <linux/spi/spidev.h>
 #include <linux/gpio.h>
 #include "gpio_dev.h"
+#include "spi_8MM_driver.h"
 
 #define ROW_BYTE_NUM (1600 * 3)
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
@@ -23,22 +24,6 @@
 #define GPIO_D1 88
 #define GPIO_D2 89
 #define GPIO_CS0 8
-
-static const char *device = "/dev/spidev1.0";
-static uint32_t mode;
-static uint8_t bits = 8;
-static uint32_t speed = 30000000;
-static uint16_t delay;
-static int verbose;
-static int transfer_size;
-static int iterations;
-static int interval = 5; /* interval in seconds for showing transfer rate */
-
-static void pabort(const char *s)
-{
-	perror(s);
-	abort();
-}
 
 void init_gpio(void)
 {
@@ -78,21 +63,12 @@ void LCD_WrCmd(unsigned char cmd)
 	gpio_SetValue(GPIO_CS0, GPIO_VALUE_HIGH);
 }
 
-void LCD_WrDat(uint8_t dat)
+void LCD_WrDat(unsigned char dat)
 {
 	gpio_SetValue(GPIO_CS0, GPIO_VALUE_LOW);
 
 	transfer_data(dat);
 
-	gpio_SetValue(GPIO_CS0, GPIO_VALUE_HIGH);
-}
-
-void LCD_WrPICDat(unsigned char const *data)
-{
-	gpio_SetValue(GPIO_CS0, GPIO_VALUE_LOW);
-
-	transfer_pixel(data);
-	
 	gpio_SetValue(GPIO_CS0, GPIO_VALUE_HIGH);
 }
 
@@ -210,7 +186,6 @@ void LCD_Image(unsigned char data[])
 	unsigned char r, g, b;
 	unsigned char buf;
 	unsigned char trd[482400];
-	unsigned char buff[32];
 	int count = 0;
 	LCD_WrCmd(0x2C);
 	gpio_SetValue(GPIO_CS0, GPIO_VALUE_LOW);
@@ -253,39 +228,7 @@ void LCD_Image(unsigned char data[])
 		//LCD_WrPICDat(0x00);
 		trd[count++] = 0x00;
 	}
-	//printf("%d\n", sizeof(trd));
-	int ret = 0;
-	int fd;
-
-	for (int ct = 0; ct < 15075; ct++)
-	{
-		for (int ctj = 0; ctj < 32; ctj++)
-		{
-			buff[ctj] = trd[ct * 32 + ctj];
-		}
-		uint8_t rx[ARRAY_SIZE(buff)] = {
-			0,
-		};
-		//printf("%d\n", sizeof(buff));
-
-		fd = open(device, O_RDWR);
-
-		ret = ioctl(fd, SPI_IOC_WR_MODE32, &mode);
-		if (ret == -1)
-			pabort("can't set spi mode");
-
-		ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
-		if (ret == -1)
-			pabort("can't set bits per word");
-
-		ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
-		if (ret == -1)
-			pabort("can't set max speed hz");
-
-		transfer(fd, buff, rx, sizeof(buff));
-
-		close(fd);
-	}
+	transfer_pixel(&trd[0]);
 }
 
 int main(int argc, char **argv)
@@ -297,7 +240,7 @@ int main(int argc, char **argv)
 	unsigned char str[30];
 	//mode |= SPI_CS_HIGH;
 	init_gpio();
-
+	spidev_init();
 	LCD_Init();
 	usleep(120000); //  	120ms
 

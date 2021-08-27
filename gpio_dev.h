@@ -105,7 +105,6 @@ int gpio_OpenFD(unsigned int gpio_num);
  */
 GPIO_Error gpio_CloseFD(int fd);
 
-static void pabort(const char *s);
 
  #endif  /* GPIO_DEV_H */
 /************************ (C) COPYRIGHT Joey Ke *****END OF FILE****/
