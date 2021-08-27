@@ -8,12 +8,15 @@
 #include <time.h>
 #include <sys/ioctl.h>
 #include <linux/ioctl.h>
+#include <linux/input.h>
 #include <sys/stat.h>
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
 #include <linux/gpio.h>
 #include "gpio_dev.h"
 #include "spi_8MM_driver.h"
+
+
 
 #define ROW_BYTE_NUM (1600 * 3)
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
@@ -177,6 +180,9 @@ void LCD_Init(void)
 
 	usleep(50000); //  50ms
 	LCD_WrCmd(0x11);
+
+	usleep(120000); //  	120ms
+	LCD_WrCmd(0x29);
 }
 
 void LCD_Image(unsigned char data[])
@@ -224,15 +230,21 @@ int main(int argc, char **argv)
 	unsigned char i = 0;
 	unsigned char rgb[3] = {0x00, 0x00, 0xFF};
 	unsigned char *buf;
+	int fd;
 	FILE *fp;
 	unsigned char str[30];
+	struct input_event event;
 
 	init_gpio();
 	spidev_init();
 	LCD_Init();
-	usleep(120000); //  	120ms
 
-	LCD_WrCmd(0x29);
+	fd = open("/dev/input/event1", O_RDWR | O_NONBLOCK);
+	if (fd < 0)
+    {
+        printf("open %s err\n", argv[1]);
+        return -1;
+    }
 
 	buf = malloc(sizeof(unsigned char) * 1600 * 1200 * 3);
 	if (buf == NULL)
@@ -241,10 +253,15 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	while (1)
-	{
+	while (!(event.type == EV_KEY && event.value == 1))
+	{		
 		for (i = 1; i < argc; i++)
-		{
+		{	
+			
+			read(fd, &event, sizeof(event));
+			if (event.type == EV_KEY && event.value == 1)
+				break;
+			
 			fp = fopen(argv[i], "rb");
 			if (fp == NULL)
 			{
@@ -256,6 +273,7 @@ int main(int argc, char **argv)
 			fread(buf, sizeof(unsigned char), 1600 * 1200 * 3, fp);
 			fclose(fp);
 
+			printf("printing %s...\n", argv[i]);
 			LCD_Image(buf);
 
 			usleep(5000000); //  	5s
