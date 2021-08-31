@@ -60,11 +60,8 @@ GPIO_Error gpio_SetDirection(unsigned int gpio_num, GPIO_Direction out_flag)
         perror("gpio/direction");  
         return fd;  
     }  
-   
-    if (out_flag)  
-        write(fd, "out", 4);  
-    else  
-        write(fd, "in", 3);  
+    
+    out_flag ? write(fd, "out", 4) : write(fd, "in", 3); 
    
     close(fd);  
     return 0;  
@@ -83,10 +80,7 @@ GPIO_Error gpio_SetValue(unsigned int gpio_num, GPIO_Value value)
         return fd;  
     }  
    
-    if (value)  
-        write(fd, "1", 2);  
-    else  
-        write(fd, "0", 2);  
+    value ?   write(fd, "1", 2) : write(fd, "0", 2);
    
     close(fd);  
     return 0;  

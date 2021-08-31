@@ -208,13 +208,13 @@ void LCD_Image(unsigned char data[])
 				g = data[y * ROW_BYTE_NUM + (x)*3 * 4 + i * 3 + 1];
 				r = data[y * ROW_BYTE_NUM + (x)*3 * 4 + i * 3 + 2];
 
-				if (b > 0x7F && g > 0x7F && r > 0x7F)
+				if (b > 0x7F && g > 0x7F && r > 0x7F)			//白
 					buf |= 0x1 << ((i)*2);
 
-				if (b <= 0x7F && g <= 0x7F && r > 0x7F)
+				if (b <= 0x7F && g <= 0x7F && r > 0x7F)			//紅
 					buf |= 0x2 << ((i)*2);
 
-				if (b <= 0x7F && g <= 0x7F && r <= 0x7F)
+				if (b <= 0x7F && g <= 0x7F && r <= 0x7F)		//黑
 					buf |= 0x3 << ((i)*2);
 			}
 			trd[count++] = buf;
