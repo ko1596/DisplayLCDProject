@@ -255,29 +255,20 @@ int main(int argc, char **argv)
 
 	while (!(event.type == EV_KEY && event.value == 1))
 	{		
-		for (i = 1; i < argc; i++)
-		{	
-			
-			read(fd, &event, sizeof(event));
-			if (event.type == EV_KEY && event.value == 1)
-				break;
-			
-			fp = fopen(argv[i], "rb");
-			if (fp == NULL)
-			{
-				printf("open %s file error\n", str);
-				return 0;
-			}
-
-			fseek(fp, 54, SEEK_SET);
-			fread(buf, sizeof(unsigned char), 1600 * 1200 * 3, fp);
-			fclose(fp);
-
-			printf("printing %s...\n", argv[i]);
-			LCD_Image(buf);
-
-			usleep(5000000); //  	5s
+		read(fd, &event, sizeof(event));
+		system("python3 bus.py");
+		fp = fopen("time.bmp", "rb");
+		if (fp == NULL)
+		{
+			printf("open %s file error\n", str);
+			return 0;
 		}
+		fseek(fp, 54, SEEK_SET);
+		fread(buf, sizeof(unsigned char), 1600 * 1200 * 3, fp);
+		fclose(fp);
+		printf("printing time.bmp...\n");
+		LCD_Image(buf);
+		usleep(10000000); //  	10s
 	}
 
 	free(buf);
