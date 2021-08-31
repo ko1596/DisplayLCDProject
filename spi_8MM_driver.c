@@ -73,8 +73,6 @@ void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
 	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
 	if (ret < 1)
 		pabort("can't send spi message");
-
-	//hex_dump(tx, len, 32, "TX");			//print transfer data
 }
 
 void transfer_data(uint8_t data)
@@ -82,9 +80,7 @@ void transfer_data(uint8_t data)
 	int ret = 0;
 	int fd;
 	uint8_t tx[] = {data};
-	uint8_t rx[ARRAY_SIZE(tx)] = {
-		0,
-	};
+	uint8_t rx[ARRAY_SIZE(tx)] = { 0,};
 
 	fd = open(spi_dev.device, O_RDWR);
 
@@ -108,9 +104,7 @@ void transfer_pixel(unsigned char *data)
 	unsigned char buff[32];
 	int ret = 0;
 	int fd;
-	uint8_t rx[ARRAY_SIZE(buff)] = {
-		0,
-	};
+	uint8_t rx[ARRAY_SIZE(buff)] = { 0,	};
 
 	fd = open(spi_dev.device, O_RDWR);
 
