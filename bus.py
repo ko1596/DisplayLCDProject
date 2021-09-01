@@ -65,11 +65,14 @@ if __name__ == '__main__':
     TOP_PIXEL = 20
     BUS_TITLE_LEFT_MARGIN = BLOCK_SIZE_WEIDTH + 100
     BUS_TIME_LEFT_MARGIN = 30
+    TITLE_FONT_SIZE = 150
+    GETIN_FONT_SIZE = 100
+    TUBE_FONT_SIZE = 150
 
     a = Auth(app_id, app_key)
     bustime = [None] * BLOCK_AMOUNT
     bustitle = [None] * BLOCK_AMOUNT
-    r = request('get', 'https://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Taipei?$filter=StopName%2FZh_tw%20eq%20%27%E8%8F%AF%E5%B1%B1%E6%96%87%E5%89%B5%E5%9C%92%E5%8D%80%27%20and%20EstimateTime%20gt%201&$orderby=EstimateTime%20asc&$top=4&$format=JSON', headers= a.get_auth_header())
+    r = request('get', 'https://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Taipei?$filter=StopName%2FZh_tw%20eq%20%27%E8%87%BA%E5%8C%97%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8(%E5%BF%A0%E5%AD%9D)%27%20and%20EstimateTime%20gt%201&$top=4&$format=JSON', headers= a.get_auth_header())
     list_of_dicts = r.json()
     print(type(r))
     print(type(list_of_dicts))
@@ -92,7 +95,6 @@ if __name__ == '__main__':
 
     for i in range(BLOCK_AMOUNT):
         height = int(((SCREEN_HEIGHT - BUS_INFO_LINE_HEIGHT)/BLOCK_AMOUNT*i)+BUS_INFO_LINE_HEIGHT)+TOP_PIXEL
-        print(height)
         if bustime[i] == "進站中":
             cv2.rectangle(img, (BUS_TIME_LEFT_MARGIN,height), (BUS_TIME_LEFT_MARGIN + BLOCK_SIZE_WEIDTH, height + BLOCK_SIZE_HEIGHT), (0, 0, 255), -1)
         else:
@@ -110,22 +112,27 @@ if __name__ == '__main__':
     ## Use simsum.ttc to write Chinese.
     fontpath = "./NotoSansCJKtc-Light.otf"     
     font = ImageFont.truetype(fontpath, 200)
-    fontbus = ImageFont.truetype(fontpath, 150)
-    fonttitle = ImageFont.truetype(fontpath, 150)
-    fontgetin = ImageFont.truetype(fontpath, 100)
+    fontbus = ImageFont.truetype(fontpath, TUBE_FONT_SIZE)
+    fonttitle = ImageFont.truetype(fontpath, TITLE_FONT_SIZE)
+    fontgetin = ImageFont.truetype(fontpath, GETIN_FONT_SIZE)
     img_pil = Image.fromarray(img)
     draw = ImageDraw.Draw(img_pil)
     text = time.strftime("%Y/%m/%d %H:%M", time.localtime())
     
+    w, h = draw.textsize(list_of_dicts[0].get("StopName").get("Zh_tw"),fonttitle)
+
     draw.text((30, -50),  text, font = font, fill = (255, 255, 255, a))
-    draw.text((0, 220),  list_of_dicts[0].get("StopName").get("Zh_tw"), font = fonttitle, fill = (b, g, r, a))
+    draw.text(((SCREEN_WEIDTH-w)/2, 220),  list_of_dicts[0].get("StopName").get("Zh_tw"), font = fonttitle, fill = (b, g, r, a))
 
     for i in range(BLOCK_AMOUNT):
         height = int(((SCREEN_HEIGHT - BUS_INFO_LINE_HEIGHT)/BLOCK_AMOUNT*i)+BUS_INFO_LINE_HEIGHT)+TOP_PIXEL
+        
         if bustime[i] == "進站中":
-            draw.text((75, height),  bustime[i], font = fontgetin, fill = (255, 255, 255, a))
+            w, h = draw.textsize(bustime[i],fontgetin)
+            draw.text(((BLOCK_SIZE_WEIDTH - w)/2+BUS_TIME_LEFT_MARGIN, height),  bustime[i], font = fontgetin, fill = (255, 255, 255, a))
         else:
-            draw.text((90, height-40),  bustime[i], font = fontbus, fill = (255, 255, 255, a))
+            w, h = draw.textsize(bustime[i],fontbus)
+            draw.text(((BLOCK_SIZE_WEIDTH - w)/2+BUS_TIME_LEFT_MARGIN, height-40),  bustime[i], font = fontbus, fill = (255, 255, 255, a))
         draw.text((BUS_TITLE_LEFT_MARGIN, height-40),  bustitle[i], font = fontbus, fill = (b, g, r, a))
 
     img = np.array(img_pil)
