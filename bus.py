@@ -55,60 +55,79 @@ def draw_border(img, pt1, pt2, color, thickness, r, d):
     cv2.ellipse(img, (x2 - r, y2 - r), (r, r), 0, 0, 90, color, thickness)
 
 if __name__ == '__main__':
+
+    SCREEN_WEIDTH = 1600
+    SCREEN_HEIGHT = 1200
+    BLOCK_SIZE_WEIDTH = 370
+    BLOCK_SIZE_HEIGHT = 150
+    BUS_INFO_LINE_HEIGHT = 420
+    BLOCK_AMOUNT = 4
+    TOP_PIXEL = 20
+    BUS_TITLE_LEFT_MARGIN = BLOCK_SIZE_WEIDTH + 100
+    BUS_TIME_LEFT_MARGIN = 30
+
     a = Auth(app_id, app_key)
-    r = request('get', 'https://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Taipei?$filter=StopName%2FZh_tw%20eq%20%27%E8%8F%AF%E5%B1%B1%E6%96%87%E5%89%B5%E5%9C%92%E5%8D%80%27%20and%20EstimateTime%20gt%201&$orderby=EstimateTime%20asc&$top=3&$format=JSON', headers= a.get_auth_header())
+    bustime = [None] * BLOCK_AMOUNT
+    bustitle = [None] * BLOCK_AMOUNT
+    r = request('get', 'https://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Taipei?$filter=StopName%2FZh_tw%20eq%20%27%E8%8F%AF%E5%B1%B1%E6%96%87%E5%89%B5%E5%9C%92%E5%8D%80%27%20and%20EstimateTime%20gt%201&$orderby=EstimateTime%20asc&$top=4&$format=JSON', headers= a.get_auth_header())
     list_of_dicts = r.json()
     print(type(r))
     print(type(list_of_dicts))
     for i in list_of_dicts:
         print(i["RouteName"].get("Zh_tw"),i["EstimateTime"]//60,"分鐘")
     print(type(list_of_dicts[0].get("RouteName").get("Zh_tw")))
-    bus1 = list_of_dicts[0].get("RouteName").get("Zh_tw")
-    bus2 = list_of_dicts[1].get("RouteName").get("Zh_tw")
-    bus3 = list_of_dicts[2].get("RouteName").get("Zh_tw")
-    bus1time = str(list_of_dicts[0].get("EstimateTime")//60)+"分"
-    bus2time = str(list_of_dicts[1].get("EstimateTime")//60)+"分"
-    bus3time = str(list_of_dicts[2].get("EstimateTime")//60)+"分"
+
+    for i in range(BLOCK_AMOUNT):
+        if list_of_dicts[i].get("EstimateTime") < 120:
+            bustime[i] = "進站中"
+        else:
+            bustime[i] = str(list_of_dicts[i].get("EstimateTime")//60)+"分"
+        bustitle[i] = list_of_dicts[i].get("RouteName").get("Zh_tw")
+
+    
+
     ## Make canvas and set the color
-    img = np.zeros((1200,1600,3),np.uint8)
+    img = np.zeros((SCREEN_HEIGHT,SCREEN_WEIDTH,3),np.uint8)
     img[:] = (255, 255, 255)
+
+    for i in range(BLOCK_AMOUNT):
+        height = int(((SCREEN_HEIGHT - BUS_INFO_LINE_HEIGHT)/BLOCK_AMOUNT*i)+BUS_INFO_LINE_HEIGHT)+TOP_PIXEL
+        print(height)
+        if bustime[i] == "進站中":
+            cv2.rectangle(img, (BUS_TIME_LEFT_MARGIN,height), (BUS_TIME_LEFT_MARGIN + BLOCK_SIZE_WEIDTH, height + BLOCK_SIZE_HEIGHT), (0, 0, 255), -1)
+        else:
+            cv2.rectangle(img, (BUS_TIME_LEFT_MARGIN,height), (BUS_TIME_LEFT_MARGIN + BLOCK_SIZE_WEIDTH, height + BLOCK_SIZE_HEIGHT), (0, 0, 0), -1)
+
 
 
     cv2.rectangle(img, (0, 0), (1600, 250), (0, 0, 0), -1)
     cv2.rectangle(img, (1075, 0), (1600, 250), (0, 0, 255), -1)
     cv2.rectangle(img, (0, 250), (1600, 420), (255, 0, 0), -1)
-    
-    cv2.rectangle(img, (0, 680), (1075, 930), (255, 0, 0), -1)
-    cv2.rectangle(img, (1075, 420), (1600, 1200), (0, 0, 0), -1)
-    cv2.line(img, (0, 425), (1600, 420), (0, 0, 0), 5)
-
-    draw_border(img, (1100,450), (1580, 650), (0,0,255), 6, 25, 25)
-    draw_border(img, (1100,700), (1580, 900), (0,0,255), 6, 25, 25)
-    draw_border(img, (1100,950), (1580, 1150), (0,0,255), 6, 25, 25)
-
-    
+    cv2.line(img, (0, BUS_INFO_LINE_HEIGHT), (SCREEN_WEIDTH, BUS_INFO_LINE_HEIGHT), (0, 0, 0), 5)
 
     b,g,r,a = 0,0,0,0
 
     ## Use simsum.ttc to write Chinese.
     fontpath = "./NotoSansCJKtc-Light.otf"     
     font = ImageFont.truetype(fontpath, 200)
-    fontbus = ImageFont.truetype(fontpath, 200)
+    fontbus = ImageFont.truetype(fontpath, 150)
     fonttitle = ImageFont.truetype(fontpath, 150)
+    fontgetin = ImageFont.truetype(fontpath, 100)
     img_pil = Image.fromarray(img)
     draw = ImageDraw.Draw(img_pil)
     text = time.strftime("%Y/%m/%d %H:%M", time.localtime())
     
-    
-    
     draw.text((30, -50),  text, font = font, fill = (255, 255, 255, a))
-    draw.text((350, 220),  list_of_dicts[0].get("StopName").get("Zh_tw"), font = fonttitle, fill = (b, g, r, a))
-    draw.text((30, 400),  bus1, font = fontbus, fill = (b, g, r, a))
-    draw.text((30, 650),  bus2, font = fontbus, fill = (b, g, r, a))
-    draw.text((30, 900),  bus3, font = fontbus, fill = (b, g, r, a))
-    draw.text((1200, 400),  bus1time, font = fontbus, fill = (255, 255, 255, a))
-    draw.text((1200, 650),  bus2time, font = fontbus, fill = (255, 255, 255, a))
-    draw.text((1200, 900),  bus3time, font = fontbus, fill = (255, 255, 255, a))
+    draw.text((0, 220),  list_of_dicts[0].get("StopName").get("Zh_tw"), font = fonttitle, fill = (b, g, r, a))
+
+    for i in range(BLOCK_AMOUNT):
+        height = int(((SCREEN_HEIGHT - BUS_INFO_LINE_HEIGHT)/BLOCK_AMOUNT*i)+BUS_INFO_LINE_HEIGHT)+TOP_PIXEL
+        if bustime[i] == "進站中":
+            draw.text((75, height),  bustime[i], font = fontgetin, fill = (255, 255, 255, a))
+        else:
+            draw.text((90, height-40),  bustime[i], font = fontbus, fill = (255, 255, 255, a))
+        draw.text((BUS_TITLE_LEFT_MARGIN, height-40),  bustitle[i], font = fontbus, fill = (b, g, r, a))
+
     img = np.array(img_pil)
 
     cv2.imwrite("time.bmp", img)
