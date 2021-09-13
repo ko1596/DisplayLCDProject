@@ -429,14 +429,18 @@ void LCD_Init(void)
 	LCD_WrCmd(0x29);
 }
 
+#define PIC_LEN 1024000
+
 void LCD_Image(unsigned char data[])
 {
 	int x, y, i, j;
 	unsigned char rgb[3] = {0xFF, 0x00, 0x00};
-	unsigned char bgr ; 
+	unsigned char bgr; 
 	unsigned char buf;
 	unsigned char date_tmp = 0 ;
+	unsigned char picture[PIC_LEN];
 	int count = 0;
+	memset(picture, '\n', PIC_LEN);
 	LCD_WrCmd(0x2C);
 	gpio_SetValue(GPIO_CS0, GPIO_VALUE_LOW);
 
@@ -457,13 +461,13 @@ void LCD_Image(unsigned char data[])
 				buf |= (bgr >>7) << (i) ;
 			
 			}
-			count++;
+			picture[count++] = ~buf ;
             //LCD_WrDat_QSPI(~buf); // R
-			LCD_WrDat(~buf);
+			//LCD_WrDat(~buf);
 		}
 	}
-	//transfer_pixel(&trd[0]);
-	
+	printf("%d\n", count);
+	transfer_pixel(&picture[0]);
 }
 
 int main(int argc, char **argv)

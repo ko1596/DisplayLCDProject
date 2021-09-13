@@ -105,6 +105,7 @@ void transfer_pixel(unsigned char *data)
 	unsigned char buff[32];
 	int ret = 0;
 	int fd;
+	int ct = 0;
 	uint8_t rx[ARRAY_SIZE(buff)] = { 0,	};
 
 	fd = open(spi_dev.device, O_RDWR);
@@ -121,14 +122,22 @@ void transfer_pixel(unsigned char *data)
 	if (ret == -1)
 		pabort("can't set max speed hz");
 
-	for (int ct = 0; ct < 15075; ct++)
+	while(data[ct * 32] != '\n')
 	{
+		memset(buff, 0, 32);
 		for (int ctj = 0; ctj < 32; ctj++)
 		{
+			if (data[ct * 32 + ctj] == '\n')
+			{
+				unsigned char buffOfdata[ctj];
+				strncpy(buffOfdata, buff, ctj-1);
+				transfer(fd, buffOfdata, rx, sizeof(buffOfdata));
+				break;
+			}
 			buff[ctj] = data[ct * 32 + ctj];
 		}
-
 		transfer(fd, buff, rx, sizeof(buff));
+		ct++;
 	}
 	close(fd);
 }
