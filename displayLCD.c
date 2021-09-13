@@ -18,30 +18,21 @@
 
 
 
-#define ROW_BYTE_NUM (1600 * 3)
+#define ROW_BYTE_NUM (1272 * 3)
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
-#define GPIO_DCX 85
-#define GPIO_RESX 86
-#define GPIO_D0 87
-#define GPIO_D1 88
-#define GPIO_D2 89
+#define GPIO_DCX 9
+#define GPIO_RESX 87
 #define GPIO_CS0 8
 
 void init_gpio(void)
 {
 	gpio_Export(GPIO_DCX);
 	gpio_Export(GPIO_RESX);
-	gpio_Export(GPIO_D0);
-	gpio_Export(GPIO_D1);
-	gpio_Export(GPIO_D2);
 	gpio_Export(GPIO_CS0);
 
 	gpio_SetDirection(GPIO_DCX, GPIO_DIRECTION_OUT);
 	gpio_SetDirection(GPIO_RESX, GPIO_DIRECTION_OUT);
-	gpio_SetDirection(GPIO_D0, GPIO_DIRECTION_OUT);
-	gpio_SetDirection(GPIO_D1, GPIO_DIRECTION_OUT);
-	gpio_SetDirection(GPIO_D2, GPIO_DIRECTION_OUT);
 	gpio_SetDirection(GPIO_CS0, GPIO_DIRECTION_OUT);
 }
 
@@ -49,9 +40,6 @@ void unexport_gpio(void)
 {
 	gpio_Unexport(GPIO_DCX);
 	gpio_Unexport(GPIO_RESX);
-	gpio_Unexport(GPIO_D0);
-	gpio_Unexport(GPIO_D1);
-	gpio_Unexport(GPIO_D2);
 	gpio_Unexport(GPIO_CS0);
 }
 
@@ -445,40 +433,37 @@ void LCD_Image(unsigned char data[])
 {
 	int x, y, i, j;
 	unsigned char rgb[3] = {0xFF, 0x00, 0x00};
-	unsigned char r, g, b;
+	unsigned char bgr ; 
 	unsigned char buf;
-	unsigned char trd[482400];
+	unsigned char date_tmp = 0 ;
 	int count = 0;
 	LCD_WrCmd(0x2C);
 	gpio_SetValue(GPIO_CS0, GPIO_VALUE_LOW);
 
-	for (y = 1199; y >= 0; y--)
-	{
-
-		for (x = 0; x < 1600 / 4; x++)
-		{
-			buf = 0;
-			for (i = 0; i < 4; i++)
-			{
-				b = data[y * ROW_BYTE_NUM + (x)*3 * 4 + i * 3];
-				g = data[y * ROW_BYTE_NUM + (x)*3 * 4 + i * 3 + 1];
-				r = data[y * ROW_BYTE_NUM + (x)*3 * 4 + i * 3 + 2];
-
-				if (b > 0x7F && g > 0x7F && r > 0x7F)			//白
-					buf |= 0x1 << ((i)*2);
-
-				if (b <= 0x7F && g <= 0x7F && r > 0x7F)			//紅
-					buf |= 0x2 << ((i)*2);
-
-				if (b <= 0x7F && g <= 0x7F && r <= 0x7F)		//黑
-					buf |= 0x3 << ((i)*2);
-			}
-			trd[count++] = buf;
+	for (y = 1696; y >= 0; y--){
+		for(x = 0; x < 1272*3; x=x+3){
+		date_tmp=data[y * ROW_BYTE_NUM + (x) ];
+		data[y * ROW_BYTE_NUM + (x) ]=data[y * ROW_BYTE_NUM + (x)  +2 ];
+		data[y * ROW_BYTE_NUM + (x)  +2 ]=date_tmp;
 		}
-		trd[count++] = 0x00;
-		trd[count++] = 0x00;
 	}
-	transfer_pixel(&trd[0]);
+	// transfer to ram buffer
+	for (y = 1696; y >= 0; y--){
+		for(x = 0; x < 1272*3 / 8; x++){
+			buf = 0;
+			for (i = 0; i < 8; i++){
+				bgr = data[y * ROW_BYTE_NUM + (x) *8 + i ];
+
+				buf |= (bgr >>7) << (i) ;
+			
+			}
+			count++;
+            //LCD_WrDat_QSPI(~buf); // R
+			LCD_WrDat(~buf);
+		}
+	}
+	//transfer_pixel(&trd[0]);
+	
 }
 
 int main(int argc, char **argv)
@@ -502,7 +487,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-	buf = malloc(sizeof(unsigned char) * 1600 * 1200 * 3);
+	buf = malloc(sizeof(unsigned char) * 1272 * 1696 * 3);
 	if (buf == NULL)
 	{
 		printf("malloc error\n");
@@ -520,7 +505,7 @@ int main(int argc, char **argv)
 			return 0;
 		}
 		fseek(fp, 54, SEEK_SET);
-		fread(buf, sizeof(unsigned char), 1600 * 1200 * 3, fp);
+		fread(buf, sizeof(unsigned char), 1272 * 1696 * 3, fp);
 		fclose(fp);
 		printf("printing time.bmp...\n");
 		LCD_Image(buf);

@@ -56,8 +56,8 @@ def draw_border(img, pt1, pt2, color, thickness, r, d):
 
 if __name__ == '__main__':
 
-    SCREEN_WEIDTH = 1600
-    SCREEN_HEIGHT = 1200
+    SCREEN_WEIDTH = 1272
+    SCREEN_HEIGHT = 1696
     BLOCK_SIZE_WEIDTH = 370
     BLOCK_SIZE_HEIGHT = 150
     BUS_INFO_LINE_HEIGHT = 420
