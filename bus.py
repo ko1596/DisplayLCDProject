@@ -74,11 +74,11 @@ if __name__ == '__main__':
     bustitle = [None] * BLOCK_AMOUNT
     r = request('get', 'https://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Taipei?$filter=StopName%2FZh_tw%20eq%20%27%E8%87%BA%E5%8C%97%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8(%E5%BF%A0%E5%AD%9D)%27%20and%20EstimateTime%20gt%201&$top=4&$format=JSON', headers= a.get_auth_header())
     list_of_dicts = r.json()
-    print(type(r))
-    print(type(list_of_dicts))
-    for i in list_of_dicts:
-        print(i["RouteName"].get("Zh_tw"),i["EstimateTime"]//60,"分鐘")
-    print(type(list_of_dicts[0].get("RouteName").get("Zh_tw")))
+    # print(type(r))
+    # print(type(list_of_dicts))
+    # for i in list_of_dicts:
+    #     print(i["RouteName"].get("Zh_tw"),i["EstimateTime"]//60,"分鐘")
+    # print(type(list_of_dicts[0].get("RouteName").get("Zh_tw")))
 
     for i in range(BLOCK_AMOUNT):
         if list_of_dicts[i].get("EstimateTime") < 120:
