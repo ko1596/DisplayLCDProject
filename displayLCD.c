@@ -21,58 +21,22 @@
 #define ROW_BYTE_NUM (1600 * 3)
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
-#define GPIO_DCX 85
-#define GPIO_RESX 86
-#define GPIO_D0 87
-#define GPIO_D1 88
-#define GPIO_D2 89
-#define GPIO_CS0 8
+#define GPIO_DCX 6
+#define GPIO_RESX 7
 
-void init_gpio(void)
-{
-	gpio_Export(GPIO_DCX);
-	gpio_Export(GPIO_RESX);
-	gpio_Export(GPIO_D0);
-	gpio_Export(GPIO_D1);
-	gpio_Export(GPIO_D2);
-	gpio_Export(GPIO_CS0);
-
-	gpio_SetDirection(GPIO_DCX, GPIO_DIRECTION_OUT);
-	gpio_SetDirection(GPIO_RESX, GPIO_DIRECTION_OUT);
-	gpio_SetDirection(GPIO_D0, GPIO_DIRECTION_OUT);
-	gpio_SetDirection(GPIO_D1, GPIO_DIRECTION_OUT);
-	gpio_SetDirection(GPIO_D2, GPIO_DIRECTION_OUT);
-	gpio_SetDirection(GPIO_CS0, GPIO_DIRECTION_OUT);
-}
-
-void unexport_gpio(void)
-{
-	gpio_Unexport(GPIO_DCX);
-	gpio_Unexport(GPIO_RESX);
-	gpio_Unexport(GPIO_D0);
-	gpio_Unexport(GPIO_D1);
-	gpio_Unexport(GPIO_D2);
-	gpio_Unexport(GPIO_CS0);
-}
 
 void LCD_WrCmd(unsigned char cmd)
 {
 	gpio_SetValue(GPIO_DCX, GPIO_VALUE_LOW);
-	gpio_SetValue(GPIO_CS0, GPIO_VALUE_LOW);
 
 	transfer_data(cmd);
 
 	gpio_SetValue(GPIO_DCX, GPIO_VALUE_HIGH);
-	gpio_SetValue(GPIO_CS0, GPIO_VALUE_HIGH);
 }
 
 void LCD_WrDat(unsigned char dat)
 {
-	gpio_SetValue(GPIO_CS0, GPIO_VALUE_LOW);
-
 	transfer_data(dat);
-
-	gpio_SetValue(GPIO_CS0, GPIO_VALUE_HIGH);
 }
 
 void LCD_SetCmd1(unsigned char cmd, unsigned char dat)
@@ -107,7 +71,6 @@ void LCD_SetCmd4(unsigned char cmd, unsigned char dat1, unsigned char dat2, unsi
 
 void LCD_Init(void)
 {
-	gpio_SetValue(GPIO_CS0, GPIO_VALUE_HIGH);
 	gpio_SetValue(GPIO_RESX, GPIO_VALUE_LOW);
 	usleep(50000); //  50ms
 	gpio_SetValue(GPIO_RESX, GPIO_VALUE_HIGH);
@@ -194,7 +157,6 @@ void LCD_Image(unsigned char data[])
 	unsigned char trd[482400];
 	int count = 0;
 	LCD_WrCmd(0x2C);
-	gpio_SetValue(GPIO_CS0, GPIO_VALUE_LOW);
 
 	for (y = 1199; y >= 0; y--)
 	{
@@ -217,12 +179,13 @@ void LCD_Image(unsigned char data[])
 				if (b <= 0x7F && g <= 0x7F && r <= 0x7F)		//黑
 					buf |= 0x3 << ((i)*2);
 			}
-			trd[count++] = buf;
+			// trd[count++] = buf;
+			LCD_WrDat(buf);
 		}
-		trd[count++] = 0x00;
-		trd[count++] = 0x00;
+		LCD_WrDat(0x00);
+		LCD_WrDat(0x00);
 	}
-	transfer_pixel(&trd[0]);
+	// transfer_pixel(&trd[0]);
 }
 
 int main(int argc, char **argv)
@@ -235,7 +198,6 @@ int main(int argc, char **argv)
 	unsigned char str[30];
 	struct input_event event;
 
-	init_gpio();
 	spidev_init();
 	LCD_Init();
 
@@ -272,5 +234,4 @@ int main(int argc, char **argv)
 	}
 
 	free(buf);
-	unexport_gpio();
 }

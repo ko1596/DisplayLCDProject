@@ -97,6 +97,7 @@ void transfer_data(uint8_t data)
 		pabort("can't set max speed hz");
 
 	transfer(fd, tx, rx, sizeof(tx));
+	close(fd);
 }
 
 void transfer_pixel(unsigned char *data)
