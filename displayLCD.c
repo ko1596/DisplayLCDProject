@@ -19,7 +19,6 @@
 
 
 #define ROW_BYTE_NUM (1600 * 3)
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 #define GPIO_DCX 6
 #define GPIO_RESX 7
@@ -74,17 +73,17 @@ void LCD_Init(void)
 	gpio_SetValue(GPIO_RESX, GPIO_VALUE_LOW);
 	usleep(50000); //  50ms
 	gpio_SetValue(GPIO_RESX, GPIO_VALUE_HIGH);
-	usleep(50000); //  50ms
+	usleep(200000); //  200ms
 	gpio_SetValue(GPIO_DCX, GPIO_VALUE_HIGH);
 
 	LCD_SetCmd3(0xFF, 0x21, 0x71, 0x41);
 	LCD_SetCmd1(0x05, 0x00);
 	LCD_SetCmd3(0xFF, 0x21, 0x71, 0x00);
-	LCD_SetCmd3(0xFF, 0x21, 0x71, 0x11);
-	LCD_SetCmd1(0x0A, 0x00);
-	LCD_SetCmd1(0x0B, 0x18);
-	LCD_SetCmd1(0x0C, 0x18);
-	LCD_SetCmd3(0xFF, 0x21, 0x71, 0x00);
+	LCD_SetCmd3(0xFF,0x21,0x71,0x11);
+	LCD_SetCmd1(0x0A,0x00);
+	LCD_SetCmd1(0x0B,0x18);
+	LCD_SetCmd1(0x0C,0x18);
+	LCD_SetCmd3(0xFF,0x21,0x71,0x00);
 	LCD_SetCmd1(0x38, 0x00);
 	LCD_SetCmd1(0x39, 0x1F);
 	LCD_SetCmd1(0x36, 0x08);
@@ -92,7 +91,9 @@ void LCD_Init(void)
 	LCD_SetCmd2(0x2A, 0x00, 0x85);
 	LCD_SetCmd4(0x2B, 0x00, 0x00, 0x04, 0xAF);
 
-	LCD_SetCmd3(0xFF, 0x21, 0x71, 0x45);
+
+
+	LCD_SetCmd3(0xFF,0x21,0x71,0x45);
 	LCD_SetCmd1(0x00, 0x04);
 	LCD_SetCmd1(0x01, 0xB0);
 	LCD_SetCmd1(0x07, 0x10);
@@ -141,10 +142,11 @@ void LCD_Init(void)
 	LCD_SetCmd1(0x03, 0x04);
 	LCD_SetCmd3(0xFF, 0x21, 0x71, 0x00);
 
-	usleep(50000); //  50ms
+	usleep(250000); //  250ms
 	LCD_WrCmd(0x11);
 
-	usleep(120000); //  	120ms
+	usleep(50000); //  	50ms
+	LCD_SetCmd1(0xE4, 0x00);
 	LCD_WrCmd(0x29);
 }
 
@@ -179,34 +181,21 @@ void LCD_Image(unsigned char data[])
 				if (b <= 0x7F && g <= 0x7F && r <= 0x7F)		//黑
 					buf |= 0x3 << ((i)*2);
 			}
-			// trd[count++] = buf;
 			LCD_WrDat(buf);
 		}
 		LCD_WrDat(0x00);
 		LCD_WrDat(0x00);
 	}
-	// transfer_pixel(&trd[0]);
 }
 
 int main(int argc, char **argv)
 {
-	unsigned char i = 0;
 	unsigned char rgb[3] = {0x00, 0x00, 0xFF};
 	unsigned char *buf;
-	int fd;
 	FILE *fp;
-	unsigned char str[30];
-	struct input_event event;
 
 	spidev_init();
 	LCD_Init();
-
-	fd = open("/dev/input/event1", O_RDWR | O_NONBLOCK);
-	if (fd < 0)
-    {
-        printf("open %s err\n", argv[1]);
-        return -1;
-    }
 
 	buf = malloc(sizeof(unsigned char) * 1600 * 1200 * 3);
 	if (buf == NULL)
@@ -215,14 +204,13 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	while (!(event.type == EV_KEY && event.value == 1))
-	{		
-		read(fd, &event, sizeof(event));
+	while (1)
+	{
 		system("python3 bus.py");
 		fp = fopen("time.bmp", "rb");
 		if (fp == NULL)
 		{
-			printf("open %s file error\n", str);
+			printf("open time.bmp file error\n");
 			return 0;
 		}
 		fseek(fp, 54, SEEK_SET);
