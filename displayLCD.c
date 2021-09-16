@@ -31,10 +31,12 @@ void LCD_WrCmd(unsigned char cmd)
 	transfer_data(cmd);
 
 	gpio_SetValue(GPIO_DCX, GPIO_VALUE_HIGH);
+	
 }
 
 void LCD_WrDat(unsigned char dat)
 {
+	
 	transfer_data(dat);
 }
 
@@ -193,7 +195,6 @@ int main(int argc, char **argv)
 	unsigned char rgb[3] = {0x00, 0x00, 0xFF};
 	unsigned char *buf;
 	FILE *fp;
-
 	spidev_init();
 	LCD_Init();
 
