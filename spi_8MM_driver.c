@@ -102,7 +102,7 @@ void transfer_data(uint8_t data)
 
 void transfer_pixel(unsigned char *data)
 {
-	unsigned char buff[32];
+	unsigned char buff[32] = {0};
 	int ret = 0;
 	int fd;
 	int ct = 0;
@@ -124,21 +124,13 @@ void transfer_pixel(unsigned char *data)
 
 	while(data[ct * 32] != '\n')
 	{
-		memset(buff, 0, 32);
-		for (int ctj = 0; ctj < 32; ctj++)
-		{
-			if (data[ct * 32 + ctj] == '\n')
-			{
-				unsigned char buffOfdata[ctj];
-				strncpy(buffOfdata, buff, ctj-1);
-				transfer(fd, buffOfdata, rx, sizeof(buffOfdata));
-				break;
-			}
-			buff[ctj] = data[ct * 32 + ctj];
-		}
+		strncpy(buff, data+ct * 32, 32);
+		// printf("%s\n", buff);
 		transfer(fd, buff, rx, sizeof(buff));
 		ct++;
+		// printf("ct: %d\n", ct*32);
 	}
+	
 	close(fd);
 }
 

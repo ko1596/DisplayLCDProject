@@ -161,6 +161,7 @@ void LCD_Image(unsigned char data[])
 	unsigned char trd[482400];
 	int count = 0;
 	LCD_WrCmd(0x2C);
+	memset(trd, '\n', sizeof(trd));
 
 	for (y = 1199; y >= 0; y--)
 	{
@@ -183,11 +184,17 @@ void LCD_Image(unsigned char data[])
 				if (b <= 0x7F && g <= 0x7F && r <= 0x7F)		//黑
 					buf |= 0x3 << ((i)*2);
 			}
-			LCD_WrDat(buf);
+			// LCD_WrDat(buf);
+			trd[count++] = buf;
 		}
-		LCD_WrDat(0x00);
-		LCD_WrDat(0x00);
+		// LCD_WrDat(0x00);
+		// LCD_WrDat(0x00);
+		trd[count++] = 0x00;
+		trd[count++] = 0x00;
 	}
+	printf("count: %d\n", count);
+	transfer_pixel(&trd[0]);
+	
 }
 
 int main(int argc, char **argv)
@@ -219,7 +226,7 @@ int main(int argc, char **argv)
 		fclose(fp);
 		printf("printing time.bmp...\n");
 		LCD_Image(buf);
-		usleep(10000000); //  	10s
+		usleep(5000000); //  	5s
 	}
 
 	free(buf);
