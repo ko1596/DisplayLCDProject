@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <string.h>
 #include <linux/spi/spidev.h>
 #include <sys/ioctl.h>
 
