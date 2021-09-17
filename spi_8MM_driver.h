@@ -23,7 +23,7 @@
 /* Define ------------------------------------------------------------------*/
 #define SPI_DEVICE              "/dev/spidev1.0"
 #define SPI_BITS_PER_WORD       8
-#define SPI_MAX_SPEED_HZ        40000000
+#define SPI_MAX_SPEED_HZ        4000000       // 4 MHz
 #define SPI_CS_CHANGE           1
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))

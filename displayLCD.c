@@ -99,7 +99,7 @@ void LCD_Init(void)
 	gpio_SetValue(GPIO_RESX, GPIO_VALUE_LOW);
 	usleep(50000); //  50ms
 	gpio_SetValue(GPIO_RESX, GPIO_VALUE_HIGH);
-	usleep(50000); //  50ms
+	usleep(200000); //  200ms
 	gpio_SetValue(GPIO_DCX, GPIO_VALUE_HIGH);
 
 	/***********WriteSPI*************/
@@ -468,24 +468,12 @@ void LCD_Image(unsigned char data[])
 
 int main(int argc, char **argv)
 {
-	unsigned char i = 0;
 	unsigned char rgb[3] = {0x00, 0x00, 0xFF};
 	unsigned char *buf;
-	int fd;
 	FILE *fp;
-	unsigned char str[30];
-	struct input_event event;
-
-	init_gpio();
 	spidev_init();
 	LCD_Init();
 
-	fd = open("/dev/input/event1", O_RDWR | O_NONBLOCK);
-	if (fd < 0)
-    {
-        printf("open %s err\n", argv[1]);
-        return -1;
-    }
 
 	buf = malloc(sizeof(unsigned char) * 1272 * 1696 * 3);
 	if (buf == NULL)
@@ -494,14 +482,13 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	while (!(event.type == EV_KEY && event.value == 1))
-	{		
-		read(fd, &event, sizeof(event));
+	while (1)
+	{
 		system("python3 bus.py");
 		fp = fopen("time.bmp", "rb");
 		if (fp == NULL)
 		{
-			printf("open %s file error\n", str);
+			printf("open time.bmp file error\n");
 			return 0;
 		}
 		fseek(fp, 54, SEEK_SET);
@@ -513,5 +500,4 @@ int main(int argc, char **argv)
 	}
 
 	free(buf);
-	unexport_gpio();
 }
