@@ -102,7 +102,7 @@ void transfer_data(uint8_t data)
 
 void transfer_pixel(unsigned char *data)
 {
-	unsigned char buff[32] = {0};
+	unsigned char buff[SPI_TRANSFER_BYTE] = {0};
 	int ret = 0;
 	int fd;
 	int ct = 0;
@@ -122,13 +122,18 @@ void transfer_pixel(unsigned char *data)
 	if (ret == -1)
 		pabort("can't set max speed hz");
 
-	while(data[ct * 32] != '\n')
-	{
-		strncpy(buff, data+ct * 32, 32);
-		// printf("%s\n", buff);
+	// while(data[ct * SPI_TRANSFER_BYTE] != '\n')
+	// {
+	// 	strncpy(buff, data+ct * SPI_TRANSFER_BYTE, SPI_TRANSFER_BYTE);
+	// 	transfer(fd, buff, rx, sizeof(buff));
+	// 	ct++;
+	// }
+
+	for(int i=0; i<482400/SPI_TRANSFER_BYTE; i++) {
+		for(int j=0; j<SPI_TRANSFER_BYTE;j++) {
+			buff[j] = data[i*SPI_TRANSFER_BYTE+j];
+		}
 		transfer(fd, buff, rx, sizeof(buff));
-		ct++;
-		// printf("ct: %d\n", ct*32);
 	}
 	
 	close(fd);

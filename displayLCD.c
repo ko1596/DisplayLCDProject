@@ -22,6 +22,7 @@
 
 #define GPIO_DCX 6
 #define GPIO_RESX 7
+#define GPIO_CSX 8
 
 
 void LCD_WrCmd(unsigned char cmd)
@@ -158,9 +159,8 @@ void LCD_Image(unsigned char data[])
 	unsigned char rgb[3] = {0xFF, 0x00, 0x00};
 	unsigned char r, g, b;
 	unsigned char buf;
-	unsigned char trd[482400];
+	unsigned char trd[1024000];
 	int count = 0;
-	LCD_WrCmd(0x2C);
 	memset(trd, '\n', sizeof(trd));
 
 	for (y = 1199; y >= 0; y--)
@@ -193,6 +193,7 @@ void LCD_Image(unsigned char data[])
 		trd[count++] = 0x00;
 	}
 	printf("count: %d\n", count);
+	LCD_WrCmd(0x2C);
 	transfer_pixel(&trd[0]);
 	
 }
@@ -204,6 +205,7 @@ int main(int argc, char **argv)
 	FILE *fp;
 	spidev_init();
 	LCD_Init();
+	gpio_SetValue(GPIO_CSX, GPIO_VALUE_LOW);
 
 	buf = malloc(sizeof(unsigned char) * 1600 * 1200 * 3);
 	if (buf == NULL)
@@ -226,7 +228,7 @@ int main(int argc, char **argv)
 		fclose(fp);
 		printf("printing time.bmp...\n");
 		LCD_Image(buf);
-		usleep(5000000); //  	5s
+		usleep(20000000); //  	20s
 	}
 
 	free(buf);

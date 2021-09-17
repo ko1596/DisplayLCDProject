@@ -27,6 +27,8 @@
 #define SPI_MAX_SPEED_HZ        4000000       // 4 MHz
 #define SPI_CS_CHANGE           1
 
+#define SPI_TRANSFER_BYTE       1024
+
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 /**
