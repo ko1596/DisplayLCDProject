@@ -24,10 +24,10 @@
 /* Define ------------------------------------------------------------------*/
 #define SPI_DEVICE              "/dev/spidev1.0"
 #define SPI_BITS_PER_WORD       8
-#define SPI_MAX_SPEED_HZ        4000000       // 4 MHz
+#define SPI_MAX_SPEED_HZ        2000000       // 4 MHz
 #define SPI_CS_CHANGE           1
 
-#define SPI_TRANSFER_BYTE       1024          //Byte
+#define SPI_TRANSFER_BYTE       2048          //Byte
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 

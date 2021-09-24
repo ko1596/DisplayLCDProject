@@ -228,7 +228,7 @@ int main(int argc, char **argv)
 		fclose(fp);
 		printf("printing time.bmp...\n");
 		LCD_Image(buf);
-		usleep(20000000); //  	20s
+		// usleep(3000000); //  	3s
 	}
 
 	free(buf);
